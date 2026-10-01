@@ -2,13 +2,14 @@
 
 Last updated: 2026-10-01
 
-Agent-oriented reference notes for overlapping EventBridge cross-account / cross-region event delivery options and the announcements behind them.
+Agent-oriented reference notes for overlapping EventBridge cross-account / cross-region event delivery options and the announcements behind them. Maintenance rules for agents are in [AGENTS.md](AGENTS.md).
 
 ## Contents
 
 - [Approach Matrix](#approach-matrix)
 - [Current Feature Support](#current-feature-support)
 - [When To Use What](#when-to-use-what)
+- [AWS Names](#aws-names)
 - [Category Timelines](#category-timelines)
 - [Related But Not Core](#related-but-not-core)
 
@@ -16,29 +17,30 @@ Agent-oriented reference notes for overlapping EventBridge cross-account / cross
 
 | Capability | EB Bus-to-Bus | EB Direct Targets | EB Shared Bus |
 | --- | --- | --- | --- |
-| Recommendation | Use for cross-region routing, or when the receiver wants its own bus, rules, and archive | Use for classic buses delivering to another team's queue/function/topic in the same region | Use for new org-wide event backbones in supported regions |
+| Recommendation | Use for cross-region routing, or when the receiver wants its own bus, rules, and archive | Use for classic buses delivering to another team's queue/function/topic/stream/API in the same region | Use for new org-wide event backbones in supported regions |
 | Primary purpose | Forward events from a bus in one account to a bus in another | Deliver events from a bus straight to an AWS service in another account | One central bus that many accounts publish to and subscribe on |
-| Main mechanism | Rule target = remote bus ARN, plus bus resource policy and sender execution role | Rule target = remote resource ARN, plus sender execution role and target resource policy | AWS RAM share of an `event-busv2`, with publishers calling it directly and consumers owning Subscribers |
+| Main mechanism | Rule target = remote bus ARN, plus receiver bus resource policy and sender execution role | Rule target = remote resource ARN, plus sender execution role and target resource policy | AWS RAM share of an `event-busv2`, with publishers calling it directly and consumers owning Subscribers |
 | Bus type | Custom event bus – classic / default bus | Custom event bus – classic / default bus | Custom event bus (enhanced, `eventsv2` API) |
 | Receiver needs EventBridge resources | ✅ bus + rules | ❌ only a resource policy on the target | ❌ bus is shared in; consumer creates Subscribers |
 | Cross-account | ✅ | ✅ | ✅ |
-| Cross-region | ✅ | ❌ same region only | ❌ regional bus; Subscriber targets must be in the Subscriber's own region and account |
-| Org-wide grant | ✅ `aws:PrincipalOrgID` in bus policy | ✅ `aws:PrincipalOrgID`/`aws:ResourceOrgID` in target policy or SCP | ✅ RAM share to organization or OU |
-| Ordering / retention / replay | ❌ (archive and replay are per bus) | ❌ | ✅ `EventGroupId` FIFO, 1–365 day retention, replay via Subscriber starting position |
-| Who pays | Sender, as custom events; the receiving bus is not charged for the hop | Sender | Publisher pays ingestion, Subscriber owner pays delivery, bus owner pays retention |
+| Cross-region | ✅ | ❌ same region only | ❌ Subscriber targets must be in the Subscriber's own account and region |
+| Org-wide grant | ✅ `aws:PrincipalOrgID` in bus policy | ✅ `aws:PrincipalOrgID` in target policy; `aws:ResourceOrgID` SCP to stay inside the org | ✅ RAM share to organization or OU |
+| Ordering | ❌ | ❌ | ✅ `EventGroupId` FIFO per Subscriber |
+| Retention / replay | Archive and replay configured per classic bus | Archive and replay on the source classic bus | ✅ built in: 1–365 day retention, replay via Subscriber starting position |
+| Who pays | Sender, as custom events; the receiver is not charged for the hop | Bus account pays a per-event charge for delivery to another account (same-account delivery is free) | Publisher pays ingress, Subscriber owner pays egress, bus owner pays storage |
 | Good for | Regional aggregation, security/audit hubs, receiver-controlled routing | Removing the intermediate bus or Lambda/SNS bridge | Platform teams, high fan-out, chargeback, ordered or replayable streams |
 
 ## Current Feature Support
 
 | Feature | EB Bus-to-Bus | EB Direct Targets | EB Shared Bus |
 | --- | --- | --- | --- |
-| Target: event bus | ✅ | n/a (that is EB Bus-to-Bus) | ✅ a classic bus is a valid Subscriber target |
+| Target: event bus | ✅ | n/a (that is EB Bus-to-Bus) | ✅ a classic bus in the Subscriber's account is a valid target |
 | Target: SQS / SNS / Lambda / Kinesis Data Streams / API Gateway | Via rules on the receiving bus | ✅ | ✅ in the Subscriber's own account |
 | Target: any other EventBridge target type | Via rules on the receiving bus | ❌ only targets with resource-based policies | ✅ 250+ services, including universal targets |
 | Cross-region | ✅ all regions except GovCloud (US) and China as destinations | ❌ | ❌ |
-| GovCloud (US) | ✅ | ✅ since 2025-04-25 | ❌ 14 commercial launch regions |
+| GovCloud (US) | ✅ same-region cross-account | ✅ since 2025-04-25; the GovCloud guide says API Gateway is not an event bus target there | ❌ not in the 14 launch regions |
 | Receiver-side filtering | ✅ rules on receiving bus | ❌ sender's rule decides | ✅ Subscriber filter owned by consumer |
-| Transitive forwarding to a third account | ❌ events are not forwarded on again | n/a | n/a |
+| Transitive forwarding to a third account | ❌ events received from another account are not forwarded on again | n/a | n/a |
 | Central visibility of who consumes what | ❌ | ❌ | ✅ bus owner sees all Subscribers and can `RevokeResource` |
 
 EB Direct Targets does not replace EB Bus-to-Bus: it is same-region only and supports only five target types. EB Shared Bus is a separate resource type with a separate API namespace (`eventsv2`) and does not change existing classic buses, which AWS says keep working unchanged.
@@ -55,14 +57,24 @@ EB Direct Targets does not replace EB Bus-to-Bus: it is same-region only and sup
 | Per-team cost allocation for publishers and consumers | EB Shared Bus |
 | Forward AWS service events (default bus) from member accounts to a security/audit account | EB Bus-to-Bus (or EB Direct Targets if the sink is an SQS/Lambda in the same region) |
 | Regional failover of event ingestion | Global endpoints (see [Related But Not Core](#related-but-not-core)) |
-| Workload in a region the enhanced bus has not launched in | EB Bus-to-Bus / EB Direct Targets |
+| Workload in a region or partition the enhanced bus has not launched in | EB Bus-to-Bus / EB Direct Targets |
+
+## AWS Names
+
+AWS documentation does not use this repo's category names. Map them before searching or citing.
+
+| Category | AWS docs / console name | API / CLI | CloudFormation |
+| --- | --- | --- | --- |
+| EB Bus-to-Bus | "Sending and receiving events between AWS accounts" / "between AWS Regions"; target "Event bus in a different account or Region" | `events` (`PutPermission`, `PutRule`, `PutTargets`) | `AWS::Events::EventBusPolicy`, `AWS::Events::Rule` |
+| EB Direct Targets | "Sending events to an AWS service in another account"; "cross-account targets"; target location "Target in another AWS account" | `events` (`PutTargets` with `RoleArn`) | `AWS::Events::Rule` |
+| EB Shared Bus | "Custom event bus" (enhanced); existing buses are "Custom event bus – classic" | `aws eventsv2` CLI, `eventbridgev2` SDK; IAM actions stay `events:*` | `AWS::EventsV2::EventBus`, `AWS::EventsV2::Subscriber`, `AWS::EventsV2::EventSource`, `AWS::EventsV2::ResourcePolicy` |
 
 ## Category Timelines
 
 | Category | File | Introduced | Notes |
 | --- | --- | --- | --- |
 | EB Bus-to-Bus | [docs/eb-bus-to-bus.md](docs/eb-bus-to-bus.md) | 2017-06-30 cross-account, 2021-04-15 cross-region | Original CloudWatch Events cross-account model. Organization grants in 2018, resource policy authorization in 2020, execution role required for new targets from 2023-03-02. |
-| EB Direct Targets | [docs/eb-direct-targets.md](docs/eb-direct-targets.md) | 2025-01-21 | Classic bus delivers straight to SQS, SNS, Lambda, Kinesis Data Streams, or API Gateway in another account, same region. GovCloud (US) on 2025-04-25. |
+| EB Direct Targets | [docs/eb-direct-targets.md](docs/eb-direct-targets.md) | 2025-01-21 | Classic bus delivers straight to SQS, SNS, Lambda, Kinesis Data Streams, or API Gateway in another account, same region. Execution roles for all target types on 2025-03-11. GovCloud (US) on 2025-04-25. |
 | EB Shared Bus | [docs/eb-shared-bus.md](docs/eb-shared-bus.md) | 2026-09-24 | Enhanced custom event bus shared through AWS RAM. Existing buses renamed "Custom event bus – classic". |
 
 ## Related But Not Core

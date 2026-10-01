@@ -8,7 +8,7 @@ Rule on a classic event bus delivering straight to an AWS service resource in an
 | --- | --- | --- | --- | --- | --- |
 | 2025-01-21 | Direct delivery to cross-account targets | [News](https://aws.amazon.com/about-aws/whats-new/2025/01/amazon-eventbridge-direct-delivery-cross-account-targets/) | [Blog](https://aws.amazon.com/blogs/compute/introducing-cross-account-targets-for-amazon-eventbridge-event-buses/) | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-cross-account.html) | SQS, SNS, Lambda, Kinesis Data Streams, and API Gateway targets in another account, all commercial regions. |
 | 2025-03-11 | IAM execution roles for all target types | [News](https://aws.amazon.com/about-aws/whats-new/2025/03/amazon-eventbridge-iam-execution-role-all-targets/) | Not found | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-identity-based.html#eb-target-permissions) | Execution roles extended to Lambda, SNS, and SQS targets, completing role support for every target type. Roles give dedicated invocation throttle limits. |
-| 2025-04-25 | Direct delivery in AWS GovCloud (US) | [News](https://aws.amazon.com/about-aws/whats-new/2025/04/amazon-eventbridge-cross-account-event-delivery-govcloud/) | Not found | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-cross-account.html) | Same model expanded to AWS GovCloud (US-East and US-West). |
+| 2025-04-25 | Direct delivery in AWS GovCloud (US) | [News](https://aws.amazon.com/about-aws/whats-new/2025/04/amazon-eventbridge-cross-account-event-delivery-govcloud/) | Not found | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-cross-account.html) | Same model expanded to AWS GovCloud (US-East and US-West). The announcement lists API Gateway, but the [GovCloud guide](https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-eventbridge.html) says API Gateway is not available as an event bus target there. |
 
 ## Direct Target Indicators
 
@@ -19,4 +19,5 @@ Rule on a classic event bus delivering straight to an AWS service resource in an
 | Resource policy on the target | Target account side of the trust. Only targets with resource-based policies are supported. |
 | `aws:ResourceOrgID` deny SCP | Stops rules invoking resources outside the organization. |
 | Target in another region | Not supported; use EB Bus-to-Bus. |
+| Billing | The bus account pays a per-event delivery charge for events delivered to a service in another account; delivery to a service in the same account is free. |
 | `PutTargets` from the target account | Not supported for non-bus cross-account targets; the bus account owns the rule and target. |

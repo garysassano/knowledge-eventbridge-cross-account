@@ -23,4 +23,4 @@ Enhanced custom event bus shared across accounts with AWS RAM, where publishers 
 | `eventsv2` CLI / `eventbridgev2` SDK | Enhanced bus API. IAM actions are still `events:*`. |
 | `RevokeResource` | Bus owner withdraws a consumer's Subscriber or event source. |
 | `AWS/EventsV2` `PublisherAccount` dimension | Per-publisher ingress metrics on a shared bus. |
-| Billing | Publisher pays ingestion, Subscriber owner pays delivery, bus owner pays retention. |
+| Billing | Per-KB pricing (rounded up to 1 KB): publisher pays ingress, Subscriber owner pays egress, bus owner pays storage. JSONata, deduplication, and schema deserialization are billed separately as event evaluation. |
