@@ -7,6 +7,7 @@ Rule on a classic event bus delivering straight to an AWS service resource in an
 | Date | Item | AWS News | AWS Blog | AWS Docs | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 2025-01-21 | Direct delivery to cross-account targets | [News](https://aws.amazon.com/about-aws/whats-new/2025/01/amazon-eventbridge-direct-delivery-cross-account-targets/) | [Blog](https://aws.amazon.com/blogs/compute/introducing-cross-account-targets-for-amazon-eventbridge-event-buses/) | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-cross-account.html) | SQS, SNS, Lambda, Kinesis Data Streams, and API Gateway targets in another account, all commercial regions. |
+| 2025-03-11 | IAM execution roles for all target types | [News](https://aws.amazon.com/about-aws/whats-new/2025/03/amazon-eventbridge-iam-execution-role-all-targets/) | Not found | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-identity-based.html#eb-target-permissions) | Execution roles extended to Lambda, SNS, and SQS targets, completing role support for every target type. Roles give dedicated invocation throttle limits. |
 | 2025-04-25 | Direct delivery in AWS GovCloud (US) | [News](https://aws.amazon.com/about-aws/whats-new/2025/04/amazon-eventbridge-cross-account-event-delivery-govcloud/) | Not found | [Docs](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-service-cross-account.html) | Same model expanded to AWS GovCloud (US-East and US-West). |
 
 ## Direct Target Indicators
